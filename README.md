@@ -29,12 +29,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/your_username/your_repository/lru" // update with your actual module path
+	"github.com/shellkah/goutte/cache"
 )
 
 func main() {
 	// Create a cache where keys are strings and values are ints.
-	cache := lru.New[string, int](3)
+	cache := cache.New[string, int](3)
 
 	// Insert key-value pairs.
 	cache.Put("a", 1)
