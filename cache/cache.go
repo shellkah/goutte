@@ -94,3 +94,12 @@ func (c *Cache[K, V]) Delete(key K) {
 		delete(c.cache, key)
 	}
 }
+
+// Clears all entries from the cache.
+func (c *Cache[K, V]) Dump() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.ll.Init()
+	c.cache = make(map[K]*list.Element)
+}

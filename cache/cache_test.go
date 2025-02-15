@@ -85,3 +85,23 @@ func TestCacheConcurrency(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestCacheDump(t *testing.T) {
+	cache := New[string, int](2)
+	cache.Put("a", 1)
+	cache.Put("b", 2)
+
+	cache.Dump()
+
+	if _, ok := cache.Get("a"); ok {
+		t.Error("Expected cache to be empty after Dump, but found key 'a'")
+	}
+	if _, ok := cache.Get("b"); ok {
+		t.Error("Expected cache to be empty after Dump, but found key 'b'")
+	}
+
+	cache.Put("c", 3)
+	if val, ok := cache.Get("c"); !ok || val != 3 {
+		t.Errorf("Expected key 'c' to have value 3, got %v (found: %v)", val, ok)
+	}
+}
