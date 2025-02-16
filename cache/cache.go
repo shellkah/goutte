@@ -3,15 +3,18 @@ package goutte
 import (
 	"container/list"
 	"sync"
+	"time"
 )
 
-// Entry in the cache.
+// Represents an item stored in the cache.
+// The expiration field is set if a TTL is provided; a zero value indicates no expiration.
 type entry[K comparable, V any] struct {
-	key   K
-	value V
+	key        K
+	value      V
+	expiration time.Time
 }
 
-// Generic, thread-safe LRU cache.
+// Thread-safe LRU cache.
 type Cache[K comparable, V any] struct {
 	capacity int                 // Maximum number of items in the cache.
 	mu       sync.Mutex          // Mutex to guard concurrent access.
@@ -32,39 +35,57 @@ func New[K comparable, V any](capacity int) *Cache[K, V] {
 	}
 }
 
-// Retrieve the value associated with the given key.
-// It returns the value and a boolean indicating whether the key was found.
-// The accessed item is moved to the front of the list (most recently used).
+// Retrieves the value associated with the given key.
+// If the entry has expired, it is removed and a not-found result is returned.
+// Otherwise, the accessed item is moved to the front of the list (most recently used).
 func (c *Cache[K, V]) Get(key K) (V, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if ele, ok := c.cache[key]; ok {
+		ent := ele.Value.(*entry[K, V])
+		if !ent.expiration.IsZero() && time.Now().After(ent.expiration) {
+			c.ll.Remove(ele)
+			delete(c.cache, key)
+			var zero V
+			return zero, false
+		}
 		c.ll.MoveToFront(ele)
-		return ele.Value.(*entry[K, V]).value, true
+		return ent.value, true
 	}
 
-	// Return the zero value of V if key is not found.
 	var zero V
 	return zero, false
 }
 
-// Inserts or updates a key-value pair in the cache.
-// If the key already exists, its value is updated and the entry is moved to the front.
-// If the cache exceeds its capacity, the least recently used item is evicted.
+// Inserts or updates a key-value pair in the cache without a TTL.
 func (c *Cache[K, V]) Put(key K, value V) {
+	c.PutWithTTL(key, value, 0)
+}
+
+// Inserts or updates a key-value pair in the cache with an optional TTL.
+// A positive ttl will cause the entry to expire after the given duration.
+func (c *Cache[K, V]) PutWithTTL(key K, value V, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	var expiration time.Time
+	if ttl > 0 {
+		expiration = time.Now().Add(ttl)
+	}
+
 	// Update existing key.
 	if ele, ok := c.cache[key]; ok {
-		ele.Value.(*entry[K, V]).value = value
+		ent := ele.Value.(*entry[K, V])
+		ent.value = value
+		ent.expiration = expiration
 		c.ll.MoveToFront(ele)
 		return
 	}
 
 	// Add new entry.
-	ele := c.ll.PushFront(&entry[K, V]{key, value})
+	ent := &entry[K, V]{key: key, value: value, expiration: expiration}
+	ele := c.ll.PushFront(ent)
 	c.cache[key] = ele
 
 	// Evict the least recently used item if over capacity.
@@ -102,4 +123,22 @@ func (c *Cache[K, V]) Dump() {
 
 	c.ll.Init()
 	c.cache = make(map[K]*list.Element)
+}
+
+// Dynamically adjusts the capacity of the cache.
+// If the new capacity is smaller than the current number of items,
+// it evicts the least recently used items until the cache size fits the new capacity.
+func (c *Cache[K, V]) SetCapacity(newCapacity int) {
+	if newCapacity <= 0 {
+		panic("new capacity must be greater than zero")
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.capacity = newCapacity
+	// Evict least recently used items until the cache fits the new capacity.
+	for c.ll.Len() > c.capacity {
+		c.removeOldest()
+	}
 }
