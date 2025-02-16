@@ -20,6 +20,7 @@
 //	func main() {
 //		// Create a cache where keys are strings and values are ints.
 //		cache := goutte.NewCache[string, int](3)
+//		defer cache.Close()
 //
 //		// Insert key-value pairs.
 //		cache.Set("a", 1)

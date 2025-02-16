@@ -1,13 +1,13 @@
-# Goutte LRU Cache
+# Goutte Cache
 
-Thread-safe and type-safe LRU (Least Recently Used) cache implemented in Go. This cache provides fast point queries via a hash map, handle TTLs and maintains access order with a doubly linked list, automatically evicting the least recently used item when the cache exceeds its capacity.
+Thread-safe and type-safe LRU (Least Recently Used) cache implemented in Go. This cache provides fast point queries via a hash map, use heap-based expiration to handle TTLs and maintains access order with a doubly linked list, automatically evicting the least recently used item when the cache exceeds its capacity.
 
 ## Features
 
 - **Generics**: Specify key and value types at creation time for compile-time type safety.
 - **Thread-Safe**: Safe for concurrent access using a mutex.
 - **LRU Eviction Policy**: Automatically removes the least recently used entry when adding new items beyond the specified capacity.
-- **Optional TTL**: Automatically removes an element if his TTL expire.
+- **Optional TTL**: Automatically removes expired items with precision with a min-heap (priority queue) to keep track of expiration times.
 - **Fast Lookups**: Uses a hash map for O(1) average-time complexity for queries.
 - **Simple API**: Provides basic operations such as `Get`, `Set`, and `Delete`.
 
@@ -36,6 +36,7 @@ import (
 func main() {
 	// Create a cache where keys are strings and values are ints.
 	cache := goutte.NewCache[string, int](3)
+	defer cache.Close()
 
 	// Insert key-value pairs.
 	cache.Set("a", 1)

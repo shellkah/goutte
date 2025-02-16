@@ -8,6 +8,7 @@ import (
 
 func TestCacheBasic(t *testing.T) {
 	cache := NewCache[string, int](2)
+	defer cache.Close()
 	cache.Set("a", 1)
 
 	if val, ok := cache.Get("a"); !ok || val != 1 {
@@ -17,6 +18,7 @@ func TestCacheBasic(t *testing.T) {
 
 func TestCacheEviction(t *testing.T) {
 	cache := NewCache[string, int](2)
+	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
 
@@ -42,6 +44,7 @@ func TestCacheEviction(t *testing.T) {
 
 func TestCacheUpdate(t *testing.T) {
 	cache := NewCache[string, int](2)
+	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("a", 10)
 
@@ -52,6 +55,7 @@ func TestCacheUpdate(t *testing.T) {
 
 func TestCacheDelete(t *testing.T) {
 	cache := NewCache[string, int](2)
+	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Delete("a")
 
@@ -62,6 +66,7 @@ func TestCacheDelete(t *testing.T) {
 
 func TestCacheConcurrency(t *testing.T) {
 	cache := NewCache[int, int](1000)
+	defer cache.Close()
 	var wg sync.WaitGroup
 
 	// Insert values concurrently.
@@ -89,6 +94,7 @@ func TestCacheConcurrency(t *testing.T) {
 
 func TestCacheDump(t *testing.T) {
 	cache := NewCache[string, int](2)
+	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
 
@@ -109,6 +115,7 @@ func TestCacheDump(t *testing.T) {
 
 func TestCacheTTL(t *testing.T) {
 	cache := NewCache[string, int](2)
+	defer cache.Close()
 
 	// Insert an item with a TTL of 50 milliseconds.
 	cache.SetWithTTL("a", 1, 50*time.Millisecond)
@@ -130,6 +137,7 @@ func TestCacheTTL(t *testing.T) {
 func TestCacheSetCapacity(t *testing.T) {
 	// Start with a capacity of 3.
 	cache := NewCache[string, int](3)
+	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
 	cache.Set("c", 3)
@@ -181,5 +189,50 @@ func TestCacheSetCapacity(t *testing.T) {
 	}
 	if count != 5 {
 		t.Errorf("Expected 5 items after increasing capacity and adding new items, got %d", count)
+	}
+}
+
+func TestCacheTTLUpdate(t *testing.T) {
+	cache := NewCache[string, int](2)
+	defer cache.Close()
+
+	// Set the key "update" with a TTL of 50ms.
+	cache.SetWithTTL("update", 1, 50*time.Millisecond)
+
+	// Wait for 40ms (still within the initial TTL).
+	time.Sleep(40 * time.Millisecond)
+
+	// Update the same key with a new TTL of 100ms from now.
+	cache.SetWithTTL("update", 1, 100*time.Millisecond)
+
+	// Wait another 20ms. The original 50ms TTL would have expired by now,
+	// but since we updated it, the key should still be present.
+	time.Sleep(20 * time.Millisecond)
+	if val, ok := cache.Get("update"); !ok || val != 1 {
+		t.Errorf("Expected key 'update' to exist after TTL update, got %v (found: %v)", val, ok)
+	}
+
+	// Wait for a period that exceeds the new TTL.
+	time.Sleep(90 * time.Millisecond)
+	if _, ok := cache.Get("update"); ok {
+		t.Error("Expected key 'update' to have expired after updated TTL, but it was found")
+	}
+}
+
+func TestCacheTTLCancel(t *testing.T) {
+	cache := NewCache[string, int](2)
+	defer cache.Close()
+
+	cache.SetWithTTL("cancel", 1, 50*time.Millisecond)
+
+	// A TTL of 0 is intended to cancel any existing expiration.
+	cache.SetWithTTL("cancel", 1, 0)
+
+	// Wait for longer than the original TTL.
+	time.Sleep(70 * time.Millisecond)
+
+	// The key should still exist because the expiration was canceled.
+	if val, ok := cache.Get("cancel"); !ok || val != 1 {
+		t.Errorf("Expected key 'cancel' to remain after TTL cancellation, got %v (found: %v)", val, ok)
 	}
 }
