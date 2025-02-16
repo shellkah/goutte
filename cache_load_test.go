@@ -1,4 +1,4 @@
-package goutte
+package goutte_test
 
 import (
 	"fmt"
@@ -7,12 +7,14 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/shellkah/goutte"
 )
 
 // Simulates a heavy concurrent workload against the cache.
 func BenchmarkCacheLoad(b *testing.B) {
 	cacheCapacity := 10000
-	c := NewCache[string, int](cacheCapacity)
+	c := goutte.NewCache[string, int](cacheCapacity)
 
 	numPrepopulate := 5000
 	for i := 0; i < numPrepopulate; i++ {
@@ -80,7 +82,7 @@ func TestCacheLoad(t *testing.T) {
 	const numOperations = 100000
 
 	cacheCapacity := 10000
-	c := NewCache[string, int](cacheCapacity)
+	c := goutte.NewCache[string, int](cacheCapacity)
 
 	for i := 0; i < 5000; i++ {
 		key := fmt.Sprintf("key%d", i)

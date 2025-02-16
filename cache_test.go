@@ -1,13 +1,15 @@
-package goutte
+package goutte_test
 
 import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/shellkah/goutte"
 )
 
 func TestCacheBasic(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 	cache.Set("a", 1)
 
@@ -17,7 +19,7 @@ func TestCacheBasic(t *testing.T) {
 }
 
 func TestCacheEviction(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -43,7 +45,7 @@ func TestCacheEviction(t *testing.T) {
 }
 
 func TestCacheUpdate(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("a", 10)
@@ -54,7 +56,7 @@ func TestCacheUpdate(t *testing.T) {
 }
 
 func TestCacheDelete(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Delete("a")
@@ -65,7 +67,7 @@ func TestCacheDelete(t *testing.T) {
 }
 
 func TestCacheConcurrency(t *testing.T) {
-	cache := NewCache[int, int](1000)
+	cache := goutte.NewCache[int, int](1000)
 	defer cache.Close()
 	var wg sync.WaitGroup
 
@@ -93,7 +95,7 @@ func TestCacheConcurrency(t *testing.T) {
 }
 
 func TestCacheDump(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -114,7 +116,7 @@ func TestCacheDump(t *testing.T) {
 }
 
 func TestCacheTTL(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 
 	// Insert an item with a TTL of 50 milliseconds.
@@ -136,7 +138,7 @@ func TestCacheTTL(t *testing.T) {
 
 func TestCacheSetCapacity(t *testing.T) {
 	// Start with a capacity of 3.
-	cache := NewCache[string, int](3)
+	cache := goutte.NewCache[string, int](3)
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -193,7 +195,7 @@ func TestCacheSetCapacity(t *testing.T) {
 }
 
 func TestCacheTTLUpdate(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 
 	// Set the key "update" with a TTL of 50ms.
@@ -220,7 +222,7 @@ func TestCacheTTLUpdate(t *testing.T) {
 }
 
 func TestCacheTTLCancel(t *testing.T) {
-	cache := NewCache[string, int](2)
+	cache := goutte.NewCache[string, int](2)
 	defer cache.Close()
 
 	cache.SetWithTTL("cancel", 1, 50*time.Millisecond)
