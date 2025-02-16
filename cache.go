@@ -24,7 +24,7 @@ type Cache[K comparable, V any] struct {
 
 // Creates a new LRU cache with a given capacity.
 // K must be a comparable type (like string, int, etc.) and V can be any type.
-func New[K comparable, V any](capacity int) *Cache[K, V] {
+func NewCache[K comparable, V any](capacity int) *Cache[K, V] {
 	if capacity <= 0 {
 		panic("capacity must be greater than zero")
 	}
@@ -59,13 +59,13 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 }
 
 // Inserts or updates a key-value pair in the cache without a TTL.
-func (c *Cache[K, V]) Put(key K, value V) {
-	c.PutWithTTL(key, value, 0)
+func (c *Cache[K, V]) Set(key K, value V) {
+	c.SetWithTTL(key, value, 0)
 }
 
 // Inserts or updates a key-value pair in the cache with an optional TTL.
 // A positive ttl will cause the entry to expire after the given duration.
-func (c *Cache[K, V]) PutWithTTL(key K, value V, ttl time.Duration) {
+func (c *Cache[K, V]) SetWithTTL(key K, value V, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

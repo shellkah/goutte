@@ -7,8 +7,8 @@ import (
 )
 
 func TestCacheBasic(t *testing.T) {
-	cache := New[string, int](2)
-	cache.Put("a", 1)
+	cache := NewCache[string, int](2)
+	cache.Set("a", 1)
 
 	if val, ok := cache.Get("a"); !ok || val != 1 {
 		t.Errorf("Expected key 'a' to have value 1, got %v (found: %v)", val, ok)
@@ -16,9 +16,9 @@ func TestCacheBasic(t *testing.T) {
 }
 
 func TestCacheEviction(t *testing.T) {
-	cache := New[string, int](2)
-	cache.Put("a", 1)
-	cache.Put("b", 2)
+	cache := NewCache[string, int](2)
+	cache.Set("a", 1)
+	cache.Set("b", 2)
 
 	// Access "a" so "b" becomes the least recently used.
 	if _, ok := cache.Get("a"); !ok {
@@ -26,7 +26,7 @@ func TestCacheEviction(t *testing.T) {
 	}
 
 	// Adding a new item should evict "b".
-	cache.Put("c", 3)
+	cache.Set("c", 3)
 	if _, ok := cache.Get("b"); ok {
 		t.Error("Expected key 'b' to be evicted")
 	}
@@ -41,9 +41,9 @@ func TestCacheEviction(t *testing.T) {
 }
 
 func TestCacheUpdate(t *testing.T) {
-	cache := New[string, int](2)
-	cache.Put("a", 1)
-	cache.Put("a", 10)
+	cache := NewCache[string, int](2)
+	cache.Set("a", 1)
+	cache.Set("a", 10)
 
 	if val, ok := cache.Get("a"); !ok || val != 10 {
 		t.Errorf("Expected key 'a' to have updated value 10, got %v (found: %v)", val, ok)
@@ -51,8 +51,8 @@ func TestCacheUpdate(t *testing.T) {
 }
 
 func TestCacheDelete(t *testing.T) {
-	cache := New[string, int](2)
-	cache.Put("a", 1)
+	cache := NewCache[string, int](2)
+	cache.Set("a", 1)
 	cache.Delete("a")
 
 	if _, ok := cache.Get("a"); ok {
@@ -61,7 +61,7 @@ func TestCacheDelete(t *testing.T) {
 }
 
 func TestCacheConcurrency(t *testing.T) {
-	cache := New[int, int](1000)
+	cache := NewCache[int, int](1000)
 	var wg sync.WaitGroup
 
 	// Insert values concurrently.
@@ -69,7 +69,7 @@ func TestCacheConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			cache.Put(i, i*10)
+			cache.Set(i, i*10)
 		}(i)
 	}
 	wg.Wait()
@@ -88,9 +88,9 @@ func TestCacheConcurrency(t *testing.T) {
 }
 
 func TestCacheDump(t *testing.T) {
-	cache := New[string, int](2)
-	cache.Put("a", 1)
-	cache.Put("b", 2)
+	cache := NewCache[string, int](2)
+	cache.Set("a", 1)
+	cache.Set("b", 2)
 
 	cache.Dump()
 
@@ -101,17 +101,17 @@ func TestCacheDump(t *testing.T) {
 		t.Error("Expected cache to be empty after Dump, but found key 'b'")
 	}
 
-	cache.Put("c", 3)
+	cache.Set("c", 3)
 	if val, ok := cache.Get("c"); !ok || val != 3 {
 		t.Errorf("Expected key 'c' to have value 3, got %v (found: %v)", val, ok)
 	}
 }
 
 func TestCacheTTL(t *testing.T) {
-	cache := New[string, int](2)
+	cache := NewCache[string, int](2)
 
 	// Insert an item with a TTL of 50 milliseconds.
-	cache.PutWithTTL("a", 1, 50*time.Millisecond)
+	cache.SetWithTTL("a", 1, 50*time.Millisecond)
 
 	// Immediately retrieving should succeed.
 	if val, ok := cache.Get("a"); !ok || val != 1 {
@@ -129,10 +129,10 @@ func TestCacheTTL(t *testing.T) {
 
 func TestCacheSetCapacity(t *testing.T) {
 	// Start with a capacity of 3.
-	cache := New[string, int](3)
-	cache.Put("a", 1)
-	cache.Put("b", 2)
-	cache.Put("c", 3)
+	cache := NewCache[string, int](3)
+	cache.Set("a", 1)
+	cache.Set("b", 2)
+	cache.Set("c", 3)
 
 	// Reduce capacity to 2. This should evict the least recently used item.
 	cache.SetCapacity(2)
@@ -154,10 +154,10 @@ func TestCacheSetCapacity(t *testing.T) {
 
 	// Increase capacity to 5.
 	cache.SetCapacity(5)
-	cache.Put("a", 10)
-	cache.Put("d", 4)
-	cache.Put("e", 5)
-	cache.Put("f", 6)
+	cache.Set("a", 10)
+	cache.Set("d", 4)
+	cache.Set("e", 5)
+	cache.Set("f", 6)
 
 	// Now expect 5 items in total.
 	count = 0

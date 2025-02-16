@@ -9,7 +9,7 @@ Thread-safe and type-safe LRU (Least Recently Used) cache implemented in Go. Thi
 - **LRU Eviction Policy**: Automatically removes the least recently used entry when adding new items beyond the specified capacity.
 - **Optional TTL**: Automatically removes an element if his TTL expire.
 - **Fast Lookups**: Uses a hash map for O(1) average-time complexity for queries.
-- **Simple API**: Provides basic operations such as `Get`, `Put`, and `Delete`.
+- **Simple API**: Provides basic operations such as `Get`, `Set`, and `Delete`.
 
 ## Installation
 
@@ -30,17 +30,17 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/shellkah/goutte/cache"
+	"github.com/shellkah/goutte"
 )
 
 func main() {
 	// Create a cache where keys are strings and values are ints.
-	cache := cache.New[string, int](3)
+	cache := goutte.NewCache[string, int](3)
 
 	// Insert key-value pairs.
-	cache.Put("a", 1)
-	cache.Put("b", 2)
-	cache.Put("c", 3)
+	cache.Set("a", 1)
+	cache.Set("b", 2)
+	cache.Set("c", 3)
 
 	// Retrieve a value.
 	if val, found := cache.Get("a"); found {
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	// Adding a new key causes eviction of the least recently used item.
-	cache.Put("d", 4)
+	cache.Set("d", 4)
 
 	// 'b' should be evicted if it was the least recently used.
 	if _, found := cache.Get("b"); !found {

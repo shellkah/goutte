@@ -5,7 +5,7 @@
 // capacity, the least recently used item is evicted automatically.
 //
 // The cache is generic, allowing you to specify the types for keys and values at creation time (using
-// Go 1.18+ generics). Keys must be comparable and values can be of any type. All operations (Get, Put,
+// Go 1.18+ generics). Keys must be comparable and values can be of any type. All operations (Get, Set,
 // Delete) are safe for concurrent use.
 //
 // ## Usage Example
@@ -19,12 +19,12 @@
 //
 //	func main() {
 //		// Create a cache where keys are strings and values are ints.
-//		cache := lru.New[string, int](3)
+//		cache := goutte.NewCache[string, int](3)
 //
 //		// Insert key-value pairs.
-//		cache.Put("a", 1)
-//		cache.Put("b", 2)
-//		cache.Put("c", 3)
+//		cache.Set("a", 1)
+//		cache.Set("b", 2)
+//		cache.Set("c", 3)
 //
 //		// Retrieve a value.
 //		if val, found := cache.Get("a"); found {
@@ -32,7 +32,7 @@
 //		}
 //
 //		// Inserting a new value when the cache is full causes eviction of the least recently used item.
-//		cache.Put("d", 4)
+//		cache.Set("d", 4)
 //		if _, found := cache.Get("b"); !found {
 //			fmt.Println("Key 'b' was evicted.")
 //		}
